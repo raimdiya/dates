@@ -350,7 +350,7 @@ const safeStorage = {
 // ═══════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════
-let CLIENT_ID     = safeStorage.getItem('os-client-id') || '';
+let CLIENT_ID     = safeStorage.getItem('os-client-id') || '732010767720-t2g1br0u7ffv9pngg2m6j3ncrno52hm5.apps.googleusercontent.com';
 let REDIRECT      = safeStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
 const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
 const META_NAME   = 'ourstory-meta.json';
@@ -1288,7 +1288,7 @@ function updateSyncButton(status, text) {
 }
 
 function openSyncModal() {
-  document.getElementById('cfg-client-id').value = safeStorage.getItem('os-client-id') || '';
+  document.getElementById('cfg-client-id').value = safeStorage.getItem('os-client-id') || CLIENT_ID;
   document.getElementById('lbl-current-origin').textContent = window.location.origin + window.location.pathname;
   const isConnected = loadToken() || accessToken;
   const statusLbl = document.getElementById('sync-status-lbl');
