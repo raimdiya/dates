@@ -351,7 +351,7 @@ const safeStorage = {
 //  CONFIG
 // ═══════════════════════════════════════════
 let CLIENT_ID     = safeStorage.getItem('os-client-id') || '732010767720-t2g1br0u7ffv9pngg2m6j3ncrno52hm5.apps.googleusercontent.com';
-let REDIRECT      = safeStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
+let REDIRECT      = window.location.origin + window.location.pathname;
 const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
 const META_NAME   = 'ourstory-meta.json';
 
@@ -1316,9 +1316,7 @@ function handleConnectSync() {
   }
   safeStorage.setItem('os-client-id', cid);
   CLIENT_ID = cid;
-  const redir = window.location.origin + window.location.pathname;
-  safeStorage.setItem('os-redirect-uri', redir);
-  REDIRECT = redir;
+  REDIRECT = window.location.origin + window.location.pathname;
   startOAuth();
 }
 
