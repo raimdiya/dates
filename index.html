@@ -344,7 +344,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#110805;font-family:
 // ═══════════════════════════════════════════
 const CLIENT_ID   = localStorage.getItem('os-client-id') || '732010767720-e6q7oc2okpk5ua0bam8a7d97395v0c8c.apps.googleusercontent.com';
 const ROOT_FOLDER = localStorage.getItem('os-root-folder') || '13Q1y0FHe2WnlrgKPafml325PGwmyx6SK'; 
-const REDIRECT    = localStorage.getItem('os-redirect-uri') || 'https://dates-of78.netlify.app/';
+const REDIRECT    = localStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
 const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
 const META_NAME   = 'ourstory-meta.json';
 
