@@ -339,12 +339,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#110805;font-family:
 </div>
 
 <script>
+const safeStorage = {
+  getItem(key) {
+    try {
+      return safeStorage.getItem(key);
+    } catch (e) {
+      return this[key] || null;
+    }
+  },
+  setItem(key, value) {
+    try {
+      safeStorage.setItem(key, value);
+    } catch (e) {
+      this[key] = String(value);
+    }
+  },
+  removeItem(key) {
+    try {
+      safeStorage.removeItem(key);
+    } catch (e) {
+      delete this[key];
+    }
+  }
+};
+
 // ═══════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════
-const CLIENT_ID   = localStorage.getItem('os-client-id') || '732010767720-e6q7oc2okpk5ua0bam8a7d97395v0c8c.apps.googleusercontent.com';
-const ROOT_FOLDER = localStorage.getItem('os-root-folder') || '13Q1y0FHe2WnlrgKPafml325PGwmyx6SK'; 
-const REDIRECT    = localStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
+const CLIENT_ID   = safeStorage.getItem('os-client-id') || '732010767720-e6q7oc2okpk5ua0bam8a7d97395v0c8c.apps.googleusercontent.com';
+const ROOT_FOLDER = safeStorage.getItem('os-root-folder') || '13Q1y0FHe2WnlrgKPafml325PGwmyx6SK'; 
+const REDIRECT    = safeStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
 const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
 const META_NAME   = 'ourstory-meta.json';
 
@@ -370,7 +394,7 @@ const AM=880, EASE='cubic-bezier(0.5,0.0,0.28,1.0)';
 // ═══════════════════════════════════════════
 function startOAuth(){
   // Save current state before redirecting
-  localStorage.setItem('os-pre-auth','1');
+  safeStorage.setItem('os-pre-auth','1');
   const params=new URLSearchParams({
     client_id:CLIENT_ID,
     redirect_uri:REDIRECT,
@@ -394,13 +418,13 @@ function parseTokenFromHash(){
 
 function saveToken(t,exp){
   accessToken=t; tokenExpiry=exp;
-  localStorage.setItem('os-token',t);
-  localStorage.setItem('os-token-exp',exp.toString());
+  safeStorage.setItem('os-token',t);
+  safeStorage.setItem('os-token-exp',exp.toString());
 }
 
 function loadToken(){
-  const t=localStorage.getItem('os-token');
-  const e=parseInt(localStorage.getItem('os-token-exp')||'0');
+  const t=safeStorage.getItem('os-token');
+  const e=parseInt(safeStorage.getItem('os-token-exp')||'0');
   if(t&&e&&Date.now()<e-60000){accessToken=t;tokenExpiry=e;return true;}
   return false;
 }
@@ -456,9 +480,9 @@ function toggleSettings(){
   const panel = document.getElementById('cs-settings-panel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   
-  document.getElementById('cfg-client-id').value = localStorage.getItem('os-client-id') || '732010767720-e6q7oc2okpk5ua0bam8a7d97395v0c8c.apps.googleusercontent.com';
-  document.getElementById('cfg-redirect-uri').value = localStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
-  document.getElementById('cfg-folder-id').value = localStorage.getItem('os-root-folder') || '13Q1y0FHe2WnlrgKPafml325PGwmyx6SK';
+  document.getElementById('cfg-client-id').value = safeStorage.getItem('os-client-id') || '732010767720-e6q7oc2okpk5ua0bam8a7d97395v0c8c.apps.googleusercontent.com';
+  document.getElementById('cfg-redirect-uri').value = safeStorage.getItem('os-redirect-uri') || (window.location.origin + window.location.pathname);
+  document.getElementById('cfg-folder-id').value = safeStorage.getItem('os-root-folder') || '13Q1y0FHe2WnlrgKPafml325PGwmyx6SK';
 }
 
 function saveConfig(){
@@ -471,12 +495,12 @@ function saveConfig(){
     return;
   }
   
-  localStorage.setItem('os-client-id', cid);
-  localStorage.setItem('os-redirect-uri', ruri);
+  safeStorage.setItem('os-client-id', cid);
+  safeStorage.setItem('os-redirect-uri', ruri);
   if(fid) {
-    localStorage.setItem('os-root-folder', fid);
+    safeStorage.setItem('os-root-folder', fid);
   } else {
-    localStorage.removeItem('os-root-folder');
+    safeStorage.removeItem('os-root-folder');
   }
   
   alert('Settings saved! Reloading page...');
@@ -544,8 +568,8 @@ async function saveMeta(){
     const payload=JSON.stringify({v:3,coverNames,dates:stripped,savedAt:Date.now()});
     const result=await uploadMultipart(META_NAME,'application/json',new Blob([payload],{type:'application/json'}),ROOT_FOLDER,metaFileId||null);
     metaFileId=result.id;
-    localStorage.setItem('os-meta-id',metaFileId);
-    localStorage.setItem('os-dates-local',JSON.stringify(dates)); // cache with local data
+    safeStorage.setItem('os-meta-id',metaFileId);
+    safeStorage.setItem('os-dates-local',JSON.stringify(dates)); // cache with local data
     setDS('ok','☁ Synced to Drive');
   }catch(e){
     setDS('err','Save error: '+e.message);
@@ -556,10 +580,10 @@ async function saveMeta(){
 async function loadMeta(){
   try{
     // Try cached meta file id first
-    metaFileId=localStorage.getItem('os-meta-id')||null;
+    metaFileId=safeStorage.getItem('os-meta-id')||null;
     if(!metaFileId){const f=await findFile(META_NAME,ROOT_FOLDER);if(f)metaFileId=f.id;}
     if(!metaFileId)return false;
-    localStorage.setItem('os-meta-id',metaFileId);
+    safeStorage.setItem('os-meta-id',metaFileId);
     const t=await getToken();
     const r=await fetch(`https://www.googleapis.com/drive/v3/files/${metaFileId}?alt=media`,{headers:{'Authorization':'Bearer '+t}});
     if(!r.ok)return false;
@@ -567,7 +591,7 @@ async function loadMeta(){
     if(!data.v)return false;
     coverNames=data.coverNames||coverNames;
     // Get local cache which has base64 image data
-    const localCache=JSON.parse(localStorage.getItem('os-dates-local')||'[]');
+    const localCache=JSON.parse(safeStorage.getItem('os-dates-local')||'[]');
     dates=(data.dates||[]).map(rd=>{
       const lc=localCache.find(x=>x.id===rd.id)||{};
       return{
@@ -578,7 +602,7 @@ async function loadMeta(){
         })
       };
     });
-    localStorage.setItem('os-dates-local',JSON.stringify(dates));
+    safeStorage.setItem('os-dates-local',JSON.stringify(dates));
     return true;
   }catch(e){console.warn('loadMeta:',e);return false;}
 }
@@ -742,14 +766,14 @@ function setCover(inp){
   const f=inp.files[0];
   const r=new FileReader();
   r.onload=async e=>{
-    coverImg=e.target.result;localStorage.setItem('os-cover',coverImg);paint();toast('Cover set! 💕');
+    coverImg=e.target.result;safeStorage.setItem('os-cover',coverImg);paint();toast('Cover set! 💕');
     try{await uploadMultipart('cover-photo'+getExt(f.name),f.type,f,ROOT_FOLDER);}catch(e){console.warn(e);}
     await saveMeta();
   };
   r.readAsDataURL(f);
 }
 function getExt(n){const m=n.match(/\.[^.]+$/);return m?m[0]:'';}
-function saveName(){const el=document.getElementById('cn-el');if(el){coverNames=el.innerText.trim()||'You & Me';localStorage.setItem('os-names',coverNames);saveMeta();}}
+function saveName(){const el=document.getElementById('cn-el');if(el){coverNames=el.innerText.trim()||'You & Me';safeStorage.setItem('os-names',coverNames);saveMeta();}}
 
 // ═══════════════════════════════════════════
 //  DATES CRUD
@@ -901,15 +925,15 @@ async function boot(){
       saveToken(hashToken.token,hashToken.expiry);
       // Clean URL
       history.replaceState(null,'',window.location.origin + window.location.pathname);
-      localStorage.removeItem('os-pre-auth');
+      safeStorage.removeItem('os-pre-auth');
     }
 
     setBar(25);
 
     // 2. Load local cache first for instant display
-    coverNames=localStorage.getItem('os-names')||'You & Me';
-    coverImg=localStorage.getItem('os-cover')||'';
-    dates=JSON.parse(localStorage.getItem('os-dates-local')||'[]');
+    coverNames=safeStorage.getItem('os-names')||'You & Me';
+    coverImg=safeStorage.getItem('os-cover')||'';
+    dates=JSON.parse(safeStorage.getItem('os-dates-local')||'[]');
     paint();setBar(40);
 
     // 3. Check if we have a valid token
@@ -927,7 +951,7 @@ async function boot(){
     setBar(80);
 
     if(ok){
-      localStorage.setItem('os-names',coverNames);
+      safeStorage.setItem('os-names',coverNames);
       paint();
       setDS('ok','☁ Google Account connected');
     }else{
